@@ -44,6 +44,38 @@ byte design[8][12] = {
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 ```
+### Arduino UNO R4 WiFi LED Matrix Code
+
+```cpp
+// Include the ArduinoGraphics library and the Arduino LED Matrix library
+#include "ArduinoGraphics.h"
+#include "Arduino_LED_Matrix.h"
+
+// Create a new LED Matrix object
+ArduinoLEDMatrix matrix;
+
+// Define the LED Matrix design
+byte design[8][12] = {
+  { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0 },
+  { 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 },
+  { 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1 },
+  { 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+  { 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+  { 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1 },
+  { 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 },
+  { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0 }
+};
+
+void setup() {
+  // Initialize the LED Matrix
+  matrix.begin();
+  // Render the design on the LED Matrix
+  matrix.renderBitmap(design, 8, 12);
+}
+
+void loop() {
+}
+```
 
 ## Screenshots
 
