@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LED Matrix Designer</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <style>
+        body {
+            font-family: 'Roboto', system-ui, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+            background-color: #121212;
+            color: rgba(255, 255, 255, 0.87);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        nav {
+            background-color: #6200ee;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        nav h1 {
+            margin: 0;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .matrix {
+            display: inline-block;
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.12);
+            transition: background 0.3s;
+        }
+        .row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .pixel {
+            width: 30px;
+            height: 30px;
+            background: #ddd;
+            border: 1px solid #999;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            outline: none;
+            border-radius: 4px;
+        }
+        .pixel.active {
+            background: #ff0000;
+        }
+        .pixel:focus {
+            border-color: #007bff;
+        }
+        .code-output {
+            background: #263238;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 300px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.06);
+        }
+        .controls {
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin: 10px 0;
+        }
+        .dimension-controls, 
+        .button-controls, 
+        .color-controls, 
+        .function-controls {
+            padding: 12px 0;
+            border-bottom: 1px solid #404040;
+        }
+        .dimension-controls:last-child, 
+        .button-controls:last-child, 
+        .color-controls:last-child, 
+        .function-controls:last-child {
+            border-bottom: none;
+        }
+        button {
+            background: #6200ee;
+            color: white;
+            border: none;
+            padding: 0 16px;
+            height: 36px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            box-shadow: 0 3px 1px -2px rgba(0,0,0,0.2), 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12);
+            transition: background 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #3700b3;
+            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.2), 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12);
+        }
+        .dimension-controls label, .color-controls label, .function-controls label {
+            margin-right: 5px;
+        }
+        .dimension-controls input, .color-controls input, .function-controls input {
+            width: 60px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        .theme-controls {
+            justify-content: space-between;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #03dac6;
+            color: #000;
+            padding: 16px 24px;
+            border-radius: 4px;
+            box-shadow: 0 3px 5px -1px rgba(0,0,0,0.2), 0 6px 10px 0 rgba(0,0,0,0.14), 0 1px 18px 0 rgba(0,0,0,0.12);
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 1000;
+        }
+        .notification.show {
+            opacity: 1;
+        }
+        @media (max-width: 600px) {
+            .pixel {
+                width: 20px;
+                height: 20px;
+            }
+            .controls {
+                flex-direction: column;
+            }
+            .code-output {
+                font-size: 14px;
+            }
+        }
+        footer {
+            background-color: #1e1e1e;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+
+        .footer-text {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+
+        .material-symbols-outlined.footer-icons {
+            font-size: 20px;
+            vertical-align: middle;
+        }
+
+        footer a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="color"] {
+            background: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            color: rgba(255, 255, 255, 0.87);
+            padding: 8px 12px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            height: 36px;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            border-color: #6200ee;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(98, 0, 238, 0.2);
+        }
+
+        input[type="color"] {
+            padding: 2px 4px;
+            cursor: pointer;
+            width: 80px;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 2px;
+        }
+
+        /* Labels styling */
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.87);
+            min-width: 100px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .dimension-controls,
+            .button-controls,
+            .color-controls,
+            .function-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .button-controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            input[type="text"],
+            input[type="number"] {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+
+        .copy-button {
+            margin-top: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #404040;
+        }
+
+        .copy-button:hover {
+            background: #505050;
+        }
+
+        .copy-button.copied {
+            background: #4CAF50;
+        }
+
+        label .material-symbols-outlined {
+            vertical-align: middle;
+            margin-right: 4px;
+            font-size: 20px;
+        }
+
+        button .material-symbols-outlined {
+            vertical-align: middle;
+            margin-right: 4px;
+            font-size: 18px;
+        }
+
+        .color-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="color"] {
+            padding: 2px 4px;
+            cursor: pointer;
+            width: 80px;
+            margin: 0;
+        }
+
+        .function-controls input[type="text"] {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1><span class="material-symbols-outlined">grid_on</span> LED Matrix Designer</h1>
+    </nav>
+    <div class="controls">
+        <div class="function-controls">
+            <label for="functionName"><span class="material-symbols-outlined">code</span> Variable Name:</label>
+            <input type="text" id="functionName" value="design" maxlength="100" onchange="updateCode()">
+        </div>
+        <div class="dimension-controls">
+            <label for="rowInput"><span class="material-symbols-outlined">table_rows</span> Rows:</label>
+            <input type="number" id="rowInput" value="8" min="1" max="32" onchange="resizeMatrix()">
+            <label for="colInput"><span class="material-symbols-outlined">view_column</span> Columns:</label>
+            <input type="number" id="colInput" value="12" min="1" max="32" onchange="resizeMatrix()">
+            <button onclick="resizeMatrix()"><span class="material-symbols-outlined">aspect_ratio</span> Resize</button>
+        </div>
+        <div class="color-controls">
+            <label for="colorPicker"><span class="material-symbols-outlined">palette</span> Active Color:</label>
+            <input type="color" id="colorPicker" value="#ff0000" onchange="updateActiveColor()">
+        </div>
+        <div class="button-controls">
+            <button onclick="clearMatrix()"><span class="material-symbols-outlined">clear_all</span> Clear All</button>
+            <button onclick="fillMatrix()"><span class="material-symbols-outlined">select_all</span> Fill All</button>
+            <button onclick="invertMatrix()"><span class="material-symbols-outlined">flip</span> Invert</button>
+        </div>
+    </div>
+    <div class="matrix" id="matrix" tabindex="0"></div>
+    <button id="copyButton" onclick="copyCode()" class="copy-button">
+        <span class="material-symbols-outlined">content_copy</span>
+        Copy
+    </button>
+    <div class="code-output" id="code" contenteditable="true" spellcheck="false"></div>
+
+    <div class="notification" id="notification">Action Completed!</div>
+
+    <footer>
+        <p class="footer-text">
+            <span class="material-symbols-outlined footer-icons">hotel_class</span>
+            <span>Surprises are possible.</span>
+            <span class="material-symbols-outlined footer-icons">view_list</span>
+            <span>v1.0.0</span>
+            <span class="material-symbols-outlined footer-icons">developer_mode</span>
+            <a href="https://nothans.com/" target="_blank">NotHans</a>
+        </p>
+    </footer>
+
+    <script>
+        const DEFAULT_ROWS = 8;
+        const DEFAULT_COLS = 12;
+        let ROWS = DEFAULT_ROWS;
+        let COLS = DEFAULT_COLS;
+        let matrix = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        let activeColor = '#ff0000';
+        let functionName = 'design';
+        
+        const matrixElement = document.getElementById('matrix');
+        const codeElement = document.getElementById('code');
+        const notification = document.getElementById('notification');
+        const functionNameInput = document.getElementById('functionName');
+        const rowInput = document.getElementById('rowInput');
+        const colInput = document.getElementById('colInput');
+
+        function showNotification(message = 'Action Completed!') {
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        function createMatrix() {
+            matrixElement.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < ROWS; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let j = 0; j < COLS; j++) {
+                    const pixel = document.createElement('div');
+                    pixel.className = 'pixel';
+                    pixel.tabIndex = 0;
+                    pixel.dataset.row = i;
+                    pixel.dataset.col = j;
+                    pixel.addEventListener('click', togglePixel);
+                    pixel.addEventListener('mouseover', (e) => {
+                        if (e.buttons === 1) {
+                            togglePixel(e);
+                        }
+                    });
+                    pixel.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            togglePixel(e);
+                        }
+                    });
+                    row.appendChild(pixel);
+                }
+                fragment.appendChild(row);
+            }
+            matrixElement.appendChild(fragment);
+        }
+
+        function togglePixel(event) {
+            const row = parseInt(event.target.dataset.row);
+            const col = parseInt(event.target.dataset.col);
+            matrix[row][col] = matrix[row][col] ? 0 : 1;
+            event.target.classList.toggle('active');
+            event.target.style.backgroundColor = matrix[row][col] ? activeColor : '#ddd';
+            updateCode();
+        }
+
+        function clearMatrix() {
+            matrix = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            updateDisplay();
+            showNotification('Matrix Cleared!');
+        }
+
+        function fillMatrix() {
+            matrix = Array.from({ length: ROWS }, () => Array(COLS).fill(1));
+            updateDisplay();
+            showNotification('Matrix Filled!');
+        }
+
+        function invertMatrix() {
+            matrix = matrix.map(row => row.map(cell => cell ? 0 : 1));
+            updateDisplay();
+            showNotification('Matrix Inverted!');
+        }
+
+        function updateDisplay() {
+            const pixels = document.getElementsByClassName('pixel');
+            for (let i = 0; i < pixels.length; i++) {
+                const row = parseInt(pixels[i].dataset.row);
+                const col = parseInt(pixels[i].dataset.col);
+                pixels[i].classList.toggle('active', matrix[row][col] === 1);
+                pixels[i].style.backgroundColor = matrix[row][col] ? activeColor : '#ddd';
+            }
+            updateCode();
+        }
+
+        function updateCode() {
+            functionName = functionNameInput.value.trim() || 'design';
+            let codeString = `byte ${functionName}[${ROWS}][${COLS}] = {\n`;
+            for (let i = 0; i < ROWS; i++) {
+                codeString += '  { ' + matrix[i].join(', ') + ' }';
+                if (i < ROWS - 1) codeString += ',';
+                codeString += '\n';
+            }
+            codeString += '};\n';
+            if (codeElement.textContent !== codeString) {
+                codeElement.textContent = codeString;
+            }
+        }
+
+        function parseCodeInput() {
+            const code = codeElement.textContent;
+            try {
+                const arrayDimensionsMatch = code.match(/byte\s+\w+\s*\[(\d+)\]\[(\d+)\]/);
+                if (arrayDimensionsMatch) {
+                    const newRows = parseInt(arrayDimensionsMatch[1]);
+                    const newCols = parseInt(arrayDimensionsMatch[2]);
+                    
+                    if (newRows !== ROWS || newCols !== COLS) {
+                        rowInput.value = newRows;
+                        colInput.value = newCols;
+                        resizeMatrix();
+                        return;
+                    }
+                }
+
+                const designMatch = code.match(/byte\s+(\w+)\s*\[\s*(\d+)\s*\]\s*\[\s*(\d+)\s*\]\s*=\s*\{([\s\S]*?)\};/);
+                
+                if (!designMatch) {
+                    showNotification('Code Parsing Failed: Invalid Format!');
+                    return;
+                }
+
+                const parsedFunctionName = designMatch[1];
+                const parsedRows = parseInt(designMatch[2]);
+                const parsedCols = parseInt(designMatch[3]);
+                const designContent = designMatch[4];
+
+                const newMatrix = designContent.split('\n').map(line => {
+                    return line.replace(/[{}]/g, '').split(',').map(num => parseInt(num.trim())).filter(num => !isNaN(num));
+                }).filter(row => row.length === parsedCols);
+
+                if (newMatrix.length === parsedRows && newMatrix.every(row => row.length === parsedCols)) {
+                    ROWS = parsedRows;
+                    COLS = parsedCols;
+                    functionName = parsedFunctionName;
+
+                    rowInput.value = ROWS;
+                    colInput.value = COLS;
+                    functionNameInput.value = functionName;
+
+                    matrix = newMatrix;
+                    updateDisplay();
+                    showNotification('Code Parsed Successfully!');
+                } else {
+                    showNotification('Code Parsing Failed: Dimensions Mismatch!');
+                }
+            } catch (e) {
+                console.error('Error parsing code input:', e);
+                showNotification('Error Parsing Code!');
+            }
+        }
+
+        function resizeMatrix() {
+            const newRows = parseInt(rowInput.value);
+            const newCols = parseInt(colInput.value);
+            
+            if (newRows < 1 || newRows > 32 || newCols < 1 || newCols > 32) {
+                showNotification('Rows and Columns must be between 1 and 32.');
+                return;
+            }
+
+            ROWS = newRows;
+            COLS = newCols;
+
+            matrix = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+
+            createMatrix();
+            updateCode();
+            showNotification('Matrix Resized!');
+        }
+
+        function updateActiveColor() {
+            const color = document.getElementById('colorPicker').value;
+            activeColor = color;
+            updateDisplay();
+            showNotification('Active Color Updated!');
+        }
+
+        // Debounce
+        function debounce(func, delay) {
+            let debounceTimer;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            }
+        }
+
+        codeElement.addEventListener('input', debounce(parseCodeInput, 500));
+
+        // Initial setup
+        createMatrix();
+        updateCode();
+
+        function copyCode() {
+            const codeText = codeElement.textContent;
+            navigator.clipboard.writeText(codeText).then(() => {
+                const copyButton = document.getElementById('copyButton');
+                copyButton.classList.add('copied');
+                copyButton.innerHTML = '<span class="material-symbols-outlined">check</span> Copied!';
+                
+                setTimeout(() => {
+                    copyButton.classList.remove('copied');
+                    copyButton.innerHTML = '<span class="material-symbols-outlined">content_copy</span> Copy';
+                }, 2000);
+            }).catch(err => {
+                showNotification('Failed to copy code');
+                console.error('Failed to copy code:', err);
+            });
+        }
+    </script>
+</body>
+</html>
