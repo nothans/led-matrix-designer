@@ -77,6 +77,20 @@ void loop() {
 }
 ```
 
+## Packed Code Format
+
+The tool also generates packed code to save program space on the Arduino. This format uses the loadFrame function of the Arduino LED Matrix library.
+
+```cpp
+const unsigned long design[] = {
+    0x555AAA55,
+    0x5AAA555A,
+    0xAA555AAA
+};
+
+matrix.loadFrame(design);
+```
+
 ## Screenshots
 
 | LED Matrix Designer App | Arduino UNO R4 WiFi |

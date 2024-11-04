@@ -75,7 +75,7 @@
             font-family: monospace;
             white-space: pre-wrap;
             overflow-x: auto;
-            max-height: 300px;
+            max-height: 400px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.06);
         }
         .controls {
@@ -228,7 +228,6 @@
             border-radius: 2px;
         }
 
-        /* Labels styling */
         label {
             font-size: 14px;
             font-weight: 500;
@@ -303,6 +302,17 @@
         .function-controls input[type="text"] {
             width: 200px;
         }
+
+        .code-section {
+            margin-top: 20px;
+        }
+        .code-section h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .copy-button {
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -332,11 +342,26 @@
         </div>
     </div>
     <div class="matrix" id="matrix" tabindex="0"></div>
-    <button id="copyButton" onclick="copyCode()" class="copy-button">
-        <span class="material-symbols-outlined">content_copy</span>
-        Copy
-    </button>
-    <div class="code-output" id="code" contenteditable="true" spellcheck="false"></div>
+
+    <!-- Original code output section -->
+    <div class="code-section">
+        <h2>Standard Code Output</h2>
+        <button id="copyButton" onclick="copyCode('code')" class="copy-button">
+            <span class="material-symbols-outlined">content_copy</span>
+            Copy
+        </button>
+        <div class="code-output" id="code" contenteditable="true" spellcheck="false"></div>
+    </div>
+
+    <!-- New packed code output section -->
+    <div class="code-section">
+        <h2>Packed Code Output</h2>
+        <button id="copyPackedButton" onclick="copyCode('packedCode')" class="copy-button">
+            <span class="material-symbols-outlined">content_copy</span>
+            Copy
+        </button>
+        <div class="code-output" id="packedCode" contenteditable="true" spellcheck="false"></div>
+    </div>
 
     <div class="notification" id="notification">Action Completed!</div>
 
@@ -362,6 +387,7 @@
         
         const matrixElement = document.getElementById('matrix');
         const codeElement = document.getElementById('code');
+        const packedCodeElement = document.getElementById('packedCode');
         const notification = document.getElementById('notification');
         const functionNameInput = document.getElementById('functionName');
         const rowInput = document.getElementById('rowInput');
@@ -456,6 +482,51 @@
             if (codeElement.textContent !== codeString) {
                 codeElement.textContent = codeString;
             }
+
+            // Generate packed code
+            let packedCodeString = generatePackedCode();
+            if (packedCodeElement.textContent !== packedCodeString) {
+                packedCodeElement.textContent = packedCodeString;
+            }
+        }
+
+        function generatePackedCode() {
+            let packedCode = '';
+            packedCode += `const unsigned long ${functionName}[] = {\n`;
+
+            // Combine all bits from the matrix into a single string
+            let allBits = '';
+            for (let i = 0; i < ROWS; i++) {
+                for (let j = 0; j < COLS; j++) {
+                    allBits += matrix[i][j] ? '1' : '0';
+                }
+            }
+
+            // Pad the bit string to make its length a multiple of 32
+            const paddedLength = Math.ceil(allBits.length / 32) * 32;
+            allBits = allBits.padEnd(paddedLength, '0');
+
+            // Split the bit string into 32-bit chunks
+            const numChunks = allBits.length / 32;
+            for (let k = 0; k < numChunks; k++) {
+                const bits32 = allBits.substr(k * 32, 32);
+                // Convert bits32 to a 32-bit unsigned integer
+                let uint32Value = parseInt(bits32, 2);
+                if (isNaN(uint32Value)) {
+                    uint32Value = 0;
+                }
+                // Format as hex string with leading zeros
+                let hexString = '0x' + uint32Value.toString(16).toUpperCase().padStart(8, '0');
+                // Add to the packed code string
+                packedCode += `    ${hexString}`;
+                if (k < numChunks - 1) {
+                    packedCode += ',\n';
+                } else {
+                    packedCode += '\n';
+                }
+            }
+            packedCode += '};\n';
+            return packedCode;
         }
 
         function parseCodeInput() {
@@ -554,10 +625,10 @@
         createMatrix();
         updateCode();
 
-        function copyCode() {
-            const codeText = codeElement.textContent;
+        function copyCode(elementId) {
+            const codeText = document.getElementById(elementId).textContent;
             navigator.clipboard.writeText(codeText).then(() => {
-                const copyButton = document.getElementById('copyButton');
+                const copyButton = elementId === 'code' ? document.getElementById('copyButton') : document.getElementById('copyPackedButton');
                 copyButton.classList.add('copied');
                 copyButton.innerHTML = '<span class="material-symbols-outlined">check</span> Copied!';
                 
